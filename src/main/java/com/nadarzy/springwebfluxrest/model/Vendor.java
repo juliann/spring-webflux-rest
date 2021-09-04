@@ -10,9 +10,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @NoArgsConstructor
 @Document
-public class Category {
+public class Vendor {
 
   @Id private String id;
 
-  private String description;
+  private String firstName;
+  private String lastName;
 }

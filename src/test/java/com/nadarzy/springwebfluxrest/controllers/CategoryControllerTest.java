@@ -11,7 +11,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 class CategoryControllerTest {
 
@@ -60,13 +63,13 @@ class CategoryControllerTest {
 
   @Test
   void testUpdateCategory() {
-    Mono<Category> categoryToUpdate = Mono.just(new Category());
+    Mono<Category> savedCategory = Mono.just(new Category());
     given(categoryRepository.save(any(Category.class))).willReturn(Mono.just(new Category()));
 
     webTestClient
         .put()
         .uri(CategoryController.CATEGORY_URL + "1")
-        .body(categoryToUpdate, Category.class)
+        .body(savedCategory, Category.class)
         .exchange()
         .expectStatus()
         .isOk();
@@ -86,5 +89,58 @@ class CategoryControllerTest {
         .exchange()
         .expectStatus()
         .isCreated();
+  }
+
+  @Test
+  void testPatchCategoryWithChanges() {
+    Category dataInDB = new Category();
+    dataInDB.setId("123");
+    dataInDB.setDescription("this is a test");
+
+    Category dataToPatch = new Category();
+    dataToPatch.setId("123");
+    dataToPatch.setDescription("this is a better test");
+
+    Mono<Category> savedCategory = Mono.just(dataInDB);
+    given(categoryRepository.findById(anyString())).willReturn(Mono.just(dataToPatch));
+
+    given(categoryRepository.save(any(Category.class))).willReturn(savedCategory);
+
+    webTestClient
+        .patch()
+        .uri(CategoryController.CATEGORY_URL + "1")
+        .body(savedCategory, Category.class)
+        .exchange()
+        .expectStatus()
+        .isOk();
+
+    verify(categoryRepository, times(1)).save(any());
+  }
+
+  @Test
+  void testPatchCategoryNoChanges() {
+    Category dataInDB = new Category();
+    dataInDB.setId("123");
+    dataInDB.setDescription("this is a test");
+
+    Category dataToPatch = new Category();
+    dataToPatch.setId("123");
+    dataToPatch.setDescription("this is a test");
+
+    Mono<Category> savedCategory = Mono.just(dataInDB);
+    given(categoryRepository.findById(anyString())).willReturn(Mono.just(dataToPatch));
+
+    given(categoryRepository.save(any(Category.class))).willReturn(savedCategory);
+
+    webTestClient
+        .patch()
+        .uri(CategoryController.CATEGORY_URL + "1")
+        .body(savedCategory, Category.class)
+        .exchange()
+        .expectStatus()
+        .isOk();
+
+    verify(categoryRepository, times(0)).save(any());
+    verify(categoryRepository, times(1)).findById(anyString());
   }
 }

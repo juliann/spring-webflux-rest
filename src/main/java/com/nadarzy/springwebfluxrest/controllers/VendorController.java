@@ -2,10 +2,9 @@ package com.nadarzy.springwebfluxrest.controllers;
 
 import com.nadarzy.springwebfluxrest.model.Vendor;
 import com.nadarzy.springwebfluxrest.repository.VendorRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.reactivestreams.Publisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -28,5 +27,28 @@ public class VendorController {
   @GetMapping("{id}")
   public Mono<Vendor> getById(@PathVariable String id) {
     return vendorRepository.findById(id);
+  }
+
+  @ResponseStatus(HttpStatus.CREATED)
+  @PostMapping("")
+  public Mono<Void> createVendor(@RequestBody Publisher<Vendor> vendorPublisher) {
+    return vendorRepository.saveAll(vendorPublisher).then();
+  }
+
+  @PutMapping("{id}")
+  public Mono<Vendor> updateVendor(@PathVariable String id, @RequestBody Vendor vendor) {
+    vendor.setId(id);
+    return vendorRepository.save(vendor);
+  }
+
+  @PatchMapping("{id}")
+  public Mono<Vendor> patchVendor(@PathVariable String id, @RequestBody Vendor vendor) {
+    Mono<Vendor> vendorToPatch = vendorRepository.findById(id);
+    Vendor vendor1 = vendorToPatch.block();
+    if (!vendor1.getFirstName().equals(vendor.getFirstName())) {
+      vendor1.setFirstName(vendor.getFirstName());
+      return vendorRepository.save(vendor1);
+    }
+    return vendorToPatch;
   }
 }

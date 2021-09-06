@@ -59,6 +59,20 @@ class CategoryControllerTest {
   }
 
   @Test
+  void testUpdateCategory() {
+    Mono<Category> categoryToUpdate = Mono.just(new Category());
+    given(categoryRepository.save(any(Category.class))).willReturn(Mono.just(new Category()));
+
+    webTestClient
+        .put()
+        .uri(CategoryController.CATEGORY_URL + "1")
+        .body(categoryToUpdate, Category.class)
+        .exchange()
+        .expectStatus()
+        .isOk();
+  }
+
+  @Test
   void testCreateCategory() {
     Category category1 = new Category();
     category1.setDescription("Cat1");
